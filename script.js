@@ -1,9 +1,6 @@
-
-
-
-const supabaseUrl = 'https://your-project-url.supabase.co'; // 
+const supabaseUrl = 'https://your-project-url.supabase.co'; 
 const supabaseKey = 'your-anon-key'; 
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const db = supabaseClient = supabase.createClient(supabaseUrl, supabaseKey); // 
 
 // ==================== DATA STORE ====================
 const USERS_KEY = 'edms_users';
@@ -66,7 +63,7 @@ async function doLogin() {
     const hashedPass = CryptoJS.SHA256(p).toString();
 
     try {
-                const { data: found, error } = await supabase
+                const { data: found, error } = await supabaseClient
             .from('users')
             .select('*')
             .eq('username', u)
