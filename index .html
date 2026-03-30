@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDMS — Electronic Document Management System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@100..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="sidebar-logo">ED<span>MS</span></div>
+      <div class="logo-sub">Electronic Document Management</div>
+    </div>
+    <div id="login-error" class="login-error">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</div>
+    <div class="form-group">
+      <label>ชื่อผู้ใช้</label>
+      <input type="text" id="login-username" placeholder="กรอกชื่อผู้ใช้" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>รหัสผ่าน</label>
+      <input type="password" id="login-password" placeholder="กรอกรหัสผ่าน" autocomplete="current-password">
+    </div>
+    <button class="btn btn-full" onclick="doLogin()">เข้าสู่ระบบ</button>
+      <p class="text-muted text-sm mt-16" style="text-align:center">
+        Powered by Blue & white Logistics Co., Ltd.
+      </p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="layout">
+    <!-- SIDEBAR OVERLAY -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">ED<span>MS</span></div>
+        <div class="sidebar-subtitle">Document Management</div>
+      </div>
+      <div class="sidebar-nav" id="sidebar-nav">
+        <!-- filled by JS -->
+      </div>
+      <div class="sidebar-footer">
+        <div class="user-badge">
+          <div class="user-avatar" id="user-avatar">U</div>
+          <div class="user-info">
+            <div class="user-name" id="user-display-name">User</div>
+            <div class="user-role" id="user-display-role">user</div>
+          </div>
+        </div>
+        <button class="btn btn-logout" onclick="doLogout()">ออกจากระบบ</button>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <div class="main-content">
+      <div class="topbar">
+        <div class="flex items-center gap-8">
+          <div class="hamburger" onclick="openSidebar()">☰</div>
+          <div class="topbar-title" id="page-title">หน้าแรก </div>
+        </div>
+        <div class="topbar-actions">
+          <div class="search-bar">
+            <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+            <input type="text" id="global-search" placeholder="ค้นหาชื่อไฟล์..." oninput="globalSearch(this.value)">
+          </div>
+        </div>
+      </div>
+      <div class="page-content" id="page-content">
+        <!-- dynamic content -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-box">
+    <div class="modal-title" id="modal-title">Modal</div>
+    <div id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- PREVIEW MODAL -->
+<div class="modal-overlay" id="preview-overlay">
+  <div class="modal preview-modal" style="max-width:860px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="modal-title" id="preview-title" style="margin-bottom:0;border:none;padding:0">Preview</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" id="preview-download-btn">ดาวน์โหลด</button>
+        <button class="btn btn-outline btn-sm" onclick="closePreview()">✕ ปิด</button>
+      </div>
+    </div>
+    <div class="preview-frame" id="preview-frame"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast-container"></div>
+<script src="script.js"> </script>
+</body>
+</html>
