@@ -1,6 +1,6 @@
 const supabaseUrl = 'https://hmslzkhetlqcxnqbtfit.supabase.co'; 
 const supabaseKey = 'sb_publishable_Qr_sjmM-sZoncdNt2Iluqg_OMYbRn8Y'; 
-const db = supabaseClient = supabase.createClient(supabaseUrl, supabaseKey); // 
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==================== DATA STORE ====================
 const USERS_KEY = 'edms_users';
@@ -102,19 +102,24 @@ function doLogout() {
             document.getElementById('login-error').style.display = 'none';
 }
 
-function checkSession() {
+async function checkSession() {
     const sid = ls(SESSION_KEY);
-        if (sid) {
-            const users = getJSON(USERS_KEY);
-            const found = users.find(x => x.id === sid);
-                if (found) {
-                currentUser = found;
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app').style.display = 'block';
-                initApp();
-                return;
-                }
+    if (sid) {
+               const { data: found, error } = await supabaseClient
+            .from('users')
+            .select('*')
+            .eq('id', sid)
+            .single();
+
+        if (found && !error) {
+            currentUser = found;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            initApp();
+        } else {
+            ls(SESSION_KEY, ''); 
         }
+    }
 }
 
 // ==================== LOG ====================
@@ -1177,6 +1182,5 @@ document.getElementById('login-username').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
 });
 
-// Init
 initData();
-checkSession();
+checkSession().catch(console.error);
