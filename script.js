@@ -86,7 +86,7 @@ async function doLogin() {
         document.getElementById('app').style.display = 'block';
         initApp();
         showToast('ยินดีต้อนรับคุณ ' + found.name, 'success');
-        hideLoading();
+    
     } catch (err) {
         console.error('Login Error:', err);
         showToast('เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล', 'error');
