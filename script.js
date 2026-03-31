@@ -484,36 +484,26 @@ async function renderDept(folder, subfolder) {
 }
 
 function renderFileTable(files, isAdmin) {
-  if (files.length === 0) {
+  if (!files || files.length === 0) {
     return `<div class="empty-state"><div class="empty-icon">📄</div><div class="empty-text">ยังไม่มีไฟล์</div></div>`;
   }
-
-  // Search within folder
-  const searchId = 'folder-search-' + Math.random().toString(36).slice(2);
   let html = `<div class="card" style="padding:0;overflow:hidden;">
-   
-    <div style="padding:0px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;"> </div>
     <div class="file-table-wrap">
     <table class="file-table">
       <thead><tr>
-        <th>ประเภทเอกสาร</th>
-        <th>ประเภทไฟล์</th>
-        <th>ชื่อไฟล์</th>
-        <th>วันที่อัพโหลด</th>
-        <th>อัพโหลดโดย</th>
-        <th>การดำเนินการ</th>
+        <th>ประเภทเอกสาร</th><th>ประเภทไฟล์</th><th>ชื่อไฟล์</th>
+        <th>วันที่อัพโหลด</th><th>อัพโหลดโดย</th><th>การดำเนินการ</th>
       </tr></thead>
-      <tbody id="file-table-body-main">`;
+      <tbody>`;
 
-
-  files.sort((a,b) => new Date(b.uploaded) - new Date(a.uploaded)).forEach(f => {
+  files.forEach(f => {
     const ext = f.name.split('.').pop().toLowerCase();
-    html += `<tr data-search="${f.name.toLowerCase()} ${(f.docType||'').toLowerCase()}">
-      <td>${f.docType ? `<span class="doc-type-badge">${f.docType}</span>` : '<span class="text-muted">—</span>'}</td>
+    html += `<tr>
+      <td>${f.doc_type ? `<span class="doc-type-badge">${f.doc_type}</span>` : '<span class="text-muted">—</span>'}</td>
       <td><span class="file-type-badge ${ext}">${ext.toUpperCase()}</span></td>
       <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(f.name)}">${escHtml(f.name)}</td>
-      <td class="text-muted text-sm">${fmtDateShort(f.uploaded)}</td>
-      <td class="text-muted text-sm">${f.uploadedBy}</td>
+      <td class="text-muted text-sm">${fmtDateShort(f.created_at)}</td>
+      <td class="text-muted text-sm">${escHtml(f.uploader_name || '')}</td>
       <td><div class="actions-cell">
         <button class="btn btn-outline btn-xs" onclick="previewFile('${f.id}')">👁 ดู</button>
         <button class="btn btn-xs" onclick="downloadFile('${f.id}')">ดาวน์โหลด</button>
@@ -524,7 +514,6 @@ function renderFileTable(files, isAdmin) {
   html += `</tbody></table></div></div>`;
   return html;
 }
-
 function filterTable(input, tbodyId) {
   const q = input.value.toLowerCase();
   const rows = document.querySelectorAll(`#${tbodyId} tr`);
@@ -863,78 +852,49 @@ function drawTextWatermark(ctx, w, h, text) {
 
 
 // ==================== FILE ACTIONS ====================
-function previewFile(id) {
-  const files = getJSON(FILES_KEY);
-  const f = files.find(x => x.id === id);
+async function previewFile(id) {
+  const { data: f } = await supabaseClient.from('files').select('*').eq('id', id).single();
   if (!f) { showToast('ไม่พบไฟล์', 'error'); return; }
 
   addLog('view', currentUser.username, `ดูไฟล์: ${f.name}`);
   document.getElementById('preview-title').textContent = f.name;
-  
   const frame = document.getElementById('preview-frame');
   const ext = f.name.split('.').pop().toLowerCase();
 
   if (['png', 'jpg', 'jpeg'].includes(ext)) {
-    frame.innerHTML = `<img src="${f.data}" alt="${escHtml(f.name)}" style="max-height:480px;object-fit:contain;">`;
+    frame.innerHTML = `<img src="${f.file_url}" style="max-height:480px;object-fit:contain;">`;
   } else if (ext === 'pdf') {
-    frame.innerHTML = `<iframe src="${f.data}" style="width:100%;height:100%;border:none;border-radius:6px;"></iframe>`;
+    frame.innerHTML = `<iframe src="${f.file_url}" style="width:100%;height:100%;border:none;border-radius:6px;"></iframe>`;
   } else {
     frame.innerHTML = `<div style="text-align:center;padding:40px;">
       <div style="font-size:48px;">${getFileIcon(ext)}</div>
-      <div style="margin-top:12px;font-size:15px;font-weight:500;">${escHtml(f.name)}</div>
-      <div style="margin-top:8px;color:var(--text3);font-size:13px;">${fmtSize(f.size)} · ${fmtDate(f.uploaded)}</div>
-      <p style="margin-top:16px;font-size:13px;color:var(--text2);">ไฟล์ประเภทนี้ไม่สามารถแสดงผลในเบราว์เซอร์ได้ กรุณาดาวน์โหลดเพื่อเปิด</p>
+      <div style="margin-top:12px;">${escHtml(f.name)}</div>
       <button class="btn mt-16" onclick="downloadFile('${id}')">ดาวน์โหลด</button>
     </div>`;
   }
-
   document.getElementById('preview-download-btn').onclick = () => downloadFile(id);
   document.getElementById('preview-overlay').classList.add('show');
 }
 
-function closePreview() {
-  document.getElementById('preview-overlay').classList.remove('show');
-  document.getElementById('preview-frame').innerHTML = '';
-}
-
-function downloadFile(id) {
-  const files = getJSON(FILES_KEY);
-  const f = files.find(x => x.id === id);
+async function downloadFile(id) {
+  const { data: f } = await supabaseClient.from('files').select('*').eq('id', id).single();
   if (!f) { showToast('ไม่พบไฟล์', 'error'); return; }
   addLog('download', currentUser.username, `ดาวน์โหลด: ${f.name}`);
   const a = document.createElement('a');
-  a.href = f.data;
+  a.href = f.file_url;
   a.download = f.name;
+  a.target = '_blank';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   showToast('ดาวน์โหลดสำเร็จ', 'success');
 }
-
-async function deleteFile(id) {
-    if (!confirm('ยืนยันการลบไฟล์นี้ถาวรจากระบบ Cloud?')) return;
-    
-    // 1. ดึงข้อมูลไฟล์ก่อนเพื่อเอาชื่อใน Storage มาลบ
-    const { data: f } = await supabaseClient.from('files').select('*').eq('id', id).single();
-    if (!f) return;
-
-    try {
-        // ดึงชื่อไฟล์จาก URL (ตัวสุดท้ายหลังเครื่องหมาย /)
-        const fileNameInStorage = f.file_url.split('/').pop();
-
-        // 2. ลบไฟล์จริงออกจาก Storage
-        await supabaseClient.storage.from('edms-files').remove([fileNameInStorage]);
-
-        // 3. ลบข้อมูลจากตาราง SQL
-        await supabaseClient.from('files').delete().eq('id', id);
-
-        addLog('delete', currentUser.username, `ลบไฟล์: ${f.name}`);
-        showToast('ลบไฟล์เรียบร้อยแล้ว', 'success');
-        navigate(currentPage, currentFolder, currentSubfolder);
-
-    } catch (err) {
-        showToast('ลบไม่สำเร็จ', 'error');
-    }
+async function deleteAnn(id) {
+  if (!confirm('ลบประกาศนี้?')) return;
+  await supabaseClient.from('announcements').delete().eq('id', id);
+  addLog('delete', currentUser.username, 'ลบประกาศ');
+  renderHome();
+  showToast('ลบประกาศสำเร็จ', 'success');
 }
 
 // ==================== GLOBAL SEARCH ====================
