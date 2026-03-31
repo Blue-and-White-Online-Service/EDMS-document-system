@@ -120,7 +120,7 @@ async function checkSession() {
     }
 
     // 2. [เริ่มการทำงาน] ถ้ามี Session ID ให้เปิด Loading ทันทีเพื่อกันหน้า Login โผล่
-    toggleLoading(true, 'กำลังกู้คืนการเชื่อมต่อ...');
+    toggleLoading(true, 'กำลังโหลด...');
 
     try {
         const { data: found, error } = await supabaseClient
@@ -524,9 +524,11 @@ function filterTable(input, tbodyId) {
 }
 
 // ==================== CENTRAL ====================
-function renderCentral() {
+async function renderCentral() {
   const isAdmin = currentUser.role === 'admin';
-  const files = getJSON(FILES_KEY).filter(x => x.section === 'central');
+  const content = document.getElementById('page-content');
+  content.innerHTML = '<div class="loading">⏳ กำลังโหลด...</div>';
+  const files = await getCloudFiles('central', null, null);
   let html = '';
   if (isAdmin) {
     html += `<div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
@@ -534,9 +536,8 @@ function renderCentral() {
     </div>`;
   }
   html += renderFileTable(files, isAdmin);
-  document.getElementById('page-content').innerHTML = html;
+  content.innerHTML = html;
 }
-
 // ==================== CAR / AUDIT (SQL VERSION) ====================
 async function renderYearFolder(section, year) {
     const isAdmin = currentUser.role === 'admin';
@@ -751,6 +752,40 @@ async function confirmUpload(section, folder) {
     pendingFiles = [];
 }
 
+function showAddFolder(section) {
+  const label = section === 'dept' ? 'ชื่อฝ่าย/แผนก' : 'ปีพุทธศักราช (เช่น 2568)';
+  showModal('เพิ่มโฟลเดอร์',
+    `<div class="form-group">
+      <label>${label}</label>
+      <input type="text" id="new-folder-name" placeholder="${label}">
+    </div>`,
+    [
+      { text: 'ยกเลิก', cls: 'btn-outline', fn: closeModal },
+      { text: 'เพิ่ม', fn: async () => {
+        const name = document.getElementById('new-folder-name').value.trim();
+        if (!name) { showToast('กรุณากรอกชื่อ', 'error'); return; }
+
+        const { error } = await supabaseClient.from('folders').insert([{ name, section }]);
+        if (error) { showToast('เพิ่มไม่สำเร็จ หรือชื่อซ้ำ', 'error'); return; }
+
+        closeModal();
+        showToast('เพิ่มสำเร็จ', 'success');
+        navigate(currentPage);
+      }}
+    ]
+  );
+}
+
+async function deleteFolder(id, name, section) {
+  if (!confirm(`ลบโฟลเดอร์ "${name}" ถาวร?\n(ไฟล์ภายในจะไม่ถูกลบ แต่จะหาไม่เจอ)`)) return;
+
+  const { error } = await supabaseClient.from('folders').delete().eq('id', id);
+  if (error) { showToast('ลบไม่สำเร็จ', 'error'); return; }
+
+  showToast('ลบโฟลเดอร์สำเร็จ', 'success');
+  navigate(currentPage);
+}
+
 // --- 1. ฟังก์ชันทำลายน้ำ PDF (ปรับปรุงให้เบาเครื่องขึ้น ป้องกันเว็บค้าง) ---
 async function applyPdfWatermark(dataUrl, callback) {
   const wmData = ls(WM_KEY);
@@ -893,8 +928,7 @@ async function deleteAnn(id) {
   if (!confirm('ลบประกาศนี้?')) return;
   await supabaseClient.from('announcements').delete().eq('id', id);
   addLog('delete', currentUser.username, 'ลบประกาศ');
-  renderHome();
-  showToast('ลบประกาศสำเร็จ', 'success');
+  renderHome(); showToast('ลบประกาศสำเร็จ', 'success');
 }
 
 // ==================== GLOBAL SEARCH ====================
@@ -1184,6 +1218,11 @@ async function uploadAndSaveFile(file, metadata) {
     
     if (dbError) throw dbError;
     navigate(currentPage, currentFolder);
+}
+
+function closePreview() {
+  document.getElementById('preview-overlay').classList.remove('show');
+  document.getElementById('preview-frame').innerHTML = '';
 }
 
 // ลบไฟล์
