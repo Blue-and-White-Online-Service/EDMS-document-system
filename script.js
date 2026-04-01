@@ -274,7 +274,8 @@ function closeSidebar() {
 
 async function renderHome() {
     const isAdmin = currentUser.role === 'admin';
-    const { data: anns, error } = await supabaseClient.from('announcements').select('*').order('created_at', { ascending: false });
+    const { data: anns, error } = await supabaseClient
+        .from('announcements').select('*').order('created_at', { ascending: false });
 
     let html = `<div class="card">
         <div class="card-header">
@@ -282,14 +283,18 @@ async function renderHome() {
             ${isAdmin ? `<button class="btn btn-sm" onclick="showAddAnn()">+ เพิ่มประกาศ</button>` : ''}
         </div>`;
 
-    if (error || !anns.length) {
+    if (error || !anns || !anns.length) {
         html += `<div class="empty-state">ยังไม่มีประกาศ</div>`;
     } else {
         anns.forEach(a => {
             html += `<div class="announcement-item">
                 <div style="flex:1">
                     <div class="ann-text">${escHtml(a.text)}</div>
-                    ${isAdmin ? `<button class="btn btn-danger btn-xs" onclick="deleteAnn('${a.id}')">🗑 ลบ</button>` : ''}
+                    ${isAdmin ? `
+                        <div style="display:flex;gap:6px;margin-top:6px;">
+                            <button class="btn btn-outline btn-xs" onclick="editAnn('${a.id}','${escHtml(a.text).replace(/'/g,"\\'")}')">✏️ แก้ไข</button>
+                            <button class="btn btn-danger btn-xs" onclick="deleteAnn('${a.id}')">🗑 ลบ</button>
+                        </div>` : ''}
                 </div>
                 <div class="ann-date">${fmtDateShort(a.created_at)}</div>
             </div>`;
@@ -310,24 +315,28 @@ function showAddAnn() {
     ]);
 }
 
-function editAnn(id) {
-    const anns = getJSON(ANN_KEY);
-    const a = anns.find(x => x.id === id);
-        if (!a) return;
-        showModal('แก้ไขประกาศ',
-            `<div class="form-group"><label>ข้อความประกาศ</label>
-            <textarea id="ann-text-edit" rows="4" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--radius);font-family:inherit;font-size:14px;resize:vertical;outline:none;">${escHtml(a.text)}</textarea></div>`,
-            [
-                { text: 'ยกเลิก', cls: 'btn-outline', fn: closeModal },
-                { text: 'บันทึก', fn: () => {
-                a.text = document.getElementById('ann-text-edit').value.trim();
-                setJSON(ANN_KEY, anns);
+function editAnn(id, currentText) {
+    const decoded = currentText.replace(/\\'/g, "'").replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+    showModal('แก้ไขประกาศ',
+        `<div class="form-group">
+            <label>ข้อความประกาศ</label>
+            <textarea id="ann-text-edit" rows="4" style="width:100%;padding:10px;border:1px solid var(--border2);border-radius:var(--radius);font-family:inherit;font-size:14px;resize:vertical;outline:none;">${escHtml(decoded)}</textarea>
+        </div>`,
+        [
+            { text: 'ยกเลิก', cls: 'btn-outline', fn: closeModal },
+            { text: 'บันทึก', fn: async () => {
+                const newText = document.getElementById('ann-text-edit').value.trim();
+                if (!newText) { showToast('กรุณากรอกข้อความ', 'error'); return; }
+                const { error } = await supabaseClient
+                    .from('announcements').update({ text: newText }).eq('id', id);
+                if (error) { showToast('แก้ไขไม่สำเร็จ', 'error'); return; }
                 addLog('edit', currentUser.username, 'แก้ไขประกาศ');
-                closeModal(); renderHome();
+                closeModal();
+                renderHome();
                 showToast('แก้ไขสำเร็จ', 'success');
             }}
-            ]
-        );
+        ]
+    );
 }
 
 function deleteAnn(id) {
@@ -924,10 +933,12 @@ async function downloadFile(id) {
   showToast('ดาวน์โหลดสำเร็จ', 'success');
 }
 async function deleteAnn(id) {
-  if (!confirm('ลบประกาศนี้?')) return;
-  await supabaseClient.from('announcements').delete().eq('id', id);
-  addLog('delete', currentUser.username, 'ลบประกาศ');
-  renderHome(); showToast('ลบประกาศสำเร็จ', 'success');
+    if (!confirm('ลบประกาศนี้?')) return;
+    const { error } = await supabaseClient.from('announcements').delete().eq('id', id);
+    if (error) { showToast('ลบไม่สำเร็จ', 'error'); return; }
+    addLog('delete', currentUser.username, 'ลบประกาศ');
+    renderHome();
+    showToast('ลบประกาศสำเร็จ', 'success');
 }
 
 // ==================== GLOBAL SEARCH ====================
