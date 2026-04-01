@@ -130,8 +130,8 @@
 .btn.btn-outline.btn-sm:hover{ color: var(--danger); }
 .btn.btn-outline:hover{ color: var(--danger); }
 .btn.btn-outline.btn-xs:hover { color: var(--accent); }
-.btn.btn-danger.btn-outline {color: var(--text); background-color: transparent;}
-.btn.btn-danger.btn-outline:hover {color: var(--danger); border-color: var(--danger); }
+.btn.btn-danger.btn-outline {color: var(--surface); background-color: var(--danger);}
+.btn.btn-danger.btn-outline:hover {color: var(--surface); background-color: var(--danger); border-color: var(--danger);}
 
   /* ===== LAYOUT ===== */
   #app { display: none; min-height: 100vh; }
@@ -704,6 +704,16 @@
 .fa-solid.fa-file-lines{color: #1d4ed8; }
 .fa-solid.fa-file-circle-check{color:#7e22ce; }
 .fa-solid.fa-file-contract{color: #f53a0b; }
+
+.fa-solid.fa-book-open {
+    color: #ff0000;
+    animation: swapColor 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes swapColor {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
+}
 
 /*logout*/
 .btn.btn-logout{
