@@ -130,7 +130,8 @@
 .btn.btn-outline.btn-sm:hover{ color: var(--danger); }
 .btn.btn-outline:hover{ color: var(--danger); }
 .btn.btn-outline.btn-xs:hover { color: var(--accent); }
-.btn.btn-danger.btn-outline:hover { color: var(--danger); border-color:black; }
+.btn.btn-danger.btn-outline {color: var(--text); background-color: transparent;}
+.btn.btn-danger.btn-outline:hover {color: var(--danger); border-color: var(--danger); }
 
   /* ===== LAYOUT ===== */
   #app { display: none; min-height: 100vh; }
