@@ -309,9 +309,9 @@ async function renderHome() {
                     html += `<div style="display:flex;align-items:center;gap:4px;background:var(--color-background-tertiary);border:1px solid var(--color-border-tertiary);border-radius:6px;padding:4px 8px;font-size:12px;">
                         <span>${getFileIcon(ext)}</span>
                         <span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(f.name)}">${escHtml(f.name)}</span>
-                        <button class="btn btn-outline btn-xs" style="padding:1px 6px;" onclick="previewFile('${f.id}')">ดู</button>
-                        <button class="btn btn-xs" style="padding:1px 6px;" onclick="downloadFile('${f.id}')">⬇</button>
-                        ${isAdmin ? `<button class="btn btn-danger btn-xs" style="padding:1px 6px;" onclick="deleteFile('${f.id}')">✕</button>` : ''}
+                        <button class="btn btn-outline btn-xs" style="padding:1px 6px;" onclick="previewFile('${f.id}')">ดูไฟล์</button>
+                        <button class="btn btn-xs" style="padding:1px 6px;" onclick="downloadFile('${f.id}')">ดาวน์โหลดไฟล์</button>
+                        ${isAdmin ? `<button class="btn btn-danger btn-xs" style="padding:1px 6px;" onclick="deleteFile('${f.id}')">✕ ลบ</button>` : ''}
                     </div>`;
                 });
                 html += `</div>`;
