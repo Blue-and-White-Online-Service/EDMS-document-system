@@ -200,38 +200,40 @@ function initApp() {
 function renderSidebar() {
     const isAdmin = currentUser.role === 'admin';
     let html = `
-            <div class="nav-section">เมนูเอกสาร</div>
-                <div class="nav-item ${currentPage==='home'?'active':''}" onclick="navigate('home')">
-                    <span class="nav-icon"><i class="fa-solid fa-house"></i></span> หน้าแรก
-                </div>
-            <div class="nav-item ${currentPage==='dept'?'active':''}" onclick="navigate('dept')">
-                <span class="nav-icon"><i class="fa-solid fa-folder-tree"></i></span> เอกสารฝ่ายต่างๆ
-            </div>
-            <div class="nav-item ${currentPage==='central'?'active':''}" onclick="navigate('central')">
-                <span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span> เอกสารส่วนกลาง
-            </div>
-            <div class="nav-item ${currentPage==='car'?'active':''}" onclick="navigate('car')">
-                <span class="nav-icon"><i class="fa-solid fa-file-circle-check"></i></span> เอกสาร CAR
-            </div>
-            <div class="nav-item ${currentPage==='audit'?'active':''}" onclick="navigate('audit')">
-                <span class="nav-icon"><i class="fa-solid fa-file-contract"></i></span> เอกสารการตรวจติดตาม
-            </div>
-
+        <div class="nav-section">เมนูเอกสาร</div>
+        <div class="nav-item ${currentPage==='home'?'active':''}" onclick="navigate('home')">
+            <span class="nav-icon"><i class="fa-solid fa-house"></i></span> หน้าแรก
+        </div>
+        <div class="nav-item ${currentPage==='dept'?'active':''}" onclick="navigate('dept')">
+            <span class="nav-icon"><i class="fa-solid fa-folder-tree"></i></span> เอกสารฝ่ายต่างๆ
+        </div>
+        <div class="nav-item ${currentPage==='central'?'active':''}" onclick="navigate('central')">
+            <span class="nav-icon"><i class="fa-solid fa-file-lines"></i></span> เอกสารส่วนกลาง
+        </div>
+        <div class="nav-item ${currentPage==='car'?'active':''}" onclick="navigate('car')">
+            <span class="nav-icon"><i class="fa-solid fa-file-circle-check"></i></span> เอกสาร CAR
+        </div>
+        <div class="nav-item ${currentPage==='audit'?'active':''}" onclick="navigate('audit')">
+            <span class="nav-icon"><i class="fa-solid fa-file-contract"></i></span> เอกสารการตรวจติดตาม
+        </div>
+        <div class="nav-item ${currentPage==='knowledge'?'active':''}" onclick="navigate('knowledge')">
+            <span class="nav-icon"><i class="fa-solid fa-book-open"></i></span> คลังคู่มือ / ความรู้
+        </div>
     `;
-        if (isAdmin) {
-    html += `
+    if (isAdmin) {
+        html += `
             <div class="nav-section">จัดการระบบ</div>
-                <div class="nav-item ${currentPage==='users'?'active':''}" onclick="navigate('users')">
-                    <span class="nav-icon"><i class="fa-solid fa-users-gear"></i></span> จัดการผู้ใช้
-                </div>
+            <div class="nav-item ${currentPage==='users'?'active':''}" onclick="navigate('users')">
+                <span class="nav-icon"><i class="fa-solid fa-users-gear"></i></span> จัดการผู้ใช้
+            </div>
             <div class="nav-item ${currentPage==='logs'?'active':''}" onclick="navigate('logs')">
-                    <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> บันทึกการใช้งาน
+                <span class="nav-icon"><i class="fa-solid fa-clock-rotate-left"></i></span> บันทึกการใช้งาน
             </div>
             <div class="nav-item ${currentPage==='watermark'?'active':''}" onclick="navigate('watermark')">
-                    <span class="nav-icon"><i class="fa-solid fa-stamp"></i></span> ตั้งค่าลายน้ำ
+                <span class="nav-icon"><i class="fa-solid fa-stamp"></i></span> ตั้งค่าลายน้ำ
             </div>
-    `;
-        }
+        `;
+    }
     document.getElementById('sidebar-nav').innerHTML = html;
 }
 
@@ -242,27 +244,28 @@ function navigate(page, folder, subfolder) {
     closeSidebar();
     renderSidebar();
 
-        const titles = {
-            home: 'หน้าแรก', dept: 'เอกสารฝ่ายต่างๆ',
-            central: 'เอกสารส่วนกลาง', car: 'เอกสาร CAR',
-            audit: 'เอกสารการตรวจติดตาม', users: 'จัดการผู้ใช้',
-            logs: 'บันทึกการใช้งาน', watermark: 'ตั้งค่าลายน้ำ'
-        };
-        
-        document.getElementById('page-title').textContent = titles[page] || page;
-        const content = document.getElementById('page-content');
-        content.innerHTML = '';
+    const titles = {
+        home: 'หน้าแรก', dept: 'เอกสารฝ่ายต่างๆ',
+        central: 'เอกสารส่วนกลาง', car: 'เอกสาร CAR',
+        audit: 'เอกสารการตรวจติดตาม', users: 'จัดการผู้ใช้',
+        logs: 'บันทึกการใช้งาน', watermark: 'ตั้งค่าลายน้ำ',
+        knowledge: 'คลังคู่มือ / เอกสารความรู้'
+    };
 
-        if (page === 'home') renderHome();
-        else if (page === 'dept') renderDept(folder, subfolder);
-        else if (page === 'central') renderCentral();
-        else if (page === 'car') renderYearFolder('car', folder);
-        else if (page === 'audit') renderYearFolder('audit', folder);
-        else if (page === 'users') renderUsers();
-        else if (page === 'logs') renderLogs();
-        else if (page === 'watermark') renderWatermark();
+    document.getElementById('page-title').textContent = titles[page] || page;
+    const content = document.getElementById('page-content');
+    content.innerHTML = '';
+
+    if (page === 'home') renderHome();
+    else if (page === 'dept') renderDept(folder, subfolder);
+    else if (page === 'central') renderCentral();
+    else if (page === 'car') renderYearFolder('car', folder);
+    else if (page === 'audit') renderYearFolder('audit', folder);
+    else if (page === 'knowledge') renderKnowledge(folder);
+    else if (page === 'users') renderUsers();
+    else if (page === 'logs') renderLogs();
+    else if (page === 'watermark') renderWatermark();
 }
-
 function openSidebar() {
         document.getElementById('sidebar').classList.add('open');
         document.getElementById('sidebar-overlay').classList.add('show');
@@ -679,6 +682,152 @@ async function renderYearFolder(section, year) {
     }
 }
 
+// ==================== KNOWLEDGE ====================
+async function renderKnowledge(folder) {
+    const isAdmin = currentUser.role === 'admin';
+    const content = document.getElementById('page-content');
+    content.innerHTML = '<div class="loading">⏳ กำลังโหลด...</div>';
+
+    if (!folder) {
+        try {
+            // อิงโฟลเดอร์จาก dept ที่ admin สร้างไว้
+            const { data: deptFolders, error: folderErr } = await supabaseClient
+                .from('folders')
+                .select('*')
+                .eq('section', 'dept')
+                .order('name');
+
+            // นับไฟล์ใน knowledge
+            const { data: allFiles, error: fileErr } = await supabaseClient
+                .from('files')
+                .select('folder')
+                .eq('section', 'knowledge');
+
+            if (folderErr) throw folderErr;
+
+            let html = `<div class="folder-grid">`;
+
+            if (deptFolders && deptFolders.length > 0) {
+                deptFolders.forEach(f => {
+                    const fileCount = (allFiles || []).filter(file => file.folder === f.name).length;
+                    html += `
+                    <div class="folder-card" onclick="navigate('knowledge','${f.name}')">
+                        <div class="folder-icon"><i class="fa-solid fa-book"></i></div>
+                        <div class="folder-name">ฝ่าย ${escHtml(f.name)}</div>
+                        <div class="folder-count">${fileCount} ไฟล์</div>
+                    </div>`;
+                });
+            } else {
+                html += `<div class="empty-state">ยังไม่มีฝ่าย — ให้ Admin เพิ่มโฟลเดอร์ในเมนูเอกสารฝ่ายต่างๆ ก่อน</div>`;
+            }
+
+            content.innerHTML = html + `</div>`;
+
+        } catch (err) {
+            showToast('เกิดข้อผิดพลาดในการดึงข้อมูล', 'error');
+            console.error(err);
+        }
+
+    } else {
+        // เข้าไปในโฟลเดอร์ฝ่าย — ทุกคนอัปโหลดได้
+        const files = await getCloudFiles('knowledge', folder, null);
+
+        let html = `<div class="breadcrumb">
+            <a onclick="navigate('knowledge')">📚 คลังคู่มือ / ความรู้</a>
+            <span class="sep">›</span>
+            <span class="current">ฝ่าย ${escHtml(folder)}</span>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+            <button class="btn btn-sm" onclick="showKnowledgeUpload('${folder}')">+ อัพโหลดไฟล์</button>
+        </div>`;
+
+        html += renderFileTable(files, isAdmin);
+        content.innerHTML = html;
+    }
+}
+
+function showKnowledgeUpload(folder) {
+    pendingFiles = [];
+    let body = `
+        <div class="watermark-note">📚 ไฟล์ที่อัปโหลดในคลังความรู้จะไม่มีลายน้ำ</div>
+        <div class="upload-zone" id="upload-zone"
+            onclick="document.getElementById('file-input-knowledge').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="handleKnowledgeDrop(event,'${folder}')">
+            <div class="upload-zone-icon">📤</div>
+            <div class="upload-zone-text">คลิกหรือลากไฟล์มาวางที่นี่</div>
+            <div class="upload-zone-hint">Word, Excel, PDF, PNG, JPG (เลือกได้หลายไฟล์)</div>
+        </div>
+        <div id="upload-file-list"></div>
+        <input type="file" id="file-input-knowledge" multiple
+            accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg"
+            style="display:none"
+            onchange="handleFileSelect(this,'knowledge','${folder}')">`;
+
+    showModal('อัพโหลดไฟล์ความรู้',
+        body,
+        [
+            { text: 'ยกเลิก', cls: 'btn-outline', fn: () => { pendingFiles = []; closeModal(); } },
+            { text: 'อัพโหลด', fn: () => confirmKnowledgeUpload(folder) }
+        ]
+    );
+}
+
+function handleKnowledgeDrop(event, folder) {
+    event.preventDefault();
+    document.getElementById('upload-zone').classList.remove('drag');
+    processFiles(Array.from(event.dataTransfer.files), 'knowledge', folder);
+}
+
+async function confirmKnowledgeUpload(folder) {
+    if (pendingFiles.length === 0) { showToast('กรุณาเลือกไฟล์', 'error'); return; }
+
+    closeModal();
+    showToast('⏳ กำลังอัปโหลด...');
+
+    for (const item of pendingFiles) {
+        try {
+            const safeName = item.name
+                .replace(/[^\w\s\-_.]/g, '')
+                .replace(/\s+/g, '_')
+                .replace(/_+/g, '_') || 'file';
+            const ext = item.name.split('.').pop();
+            const fileName = `${Date.now()}_${safeName}.${ext}`.replace(/\.\w+\.\w+$/, `.${ext}`);
+
+            const arrayBuffer = await item.file.arrayBuffer();
+            const blob = new Blob([arrayBuffer], { type: item.file.type });
+
+            const { error: stError } = await supabaseClient.storage
+                .from('edms-file').upload(fileName, blob, { contentType: item.file.type });
+            if (stError) throw stError;
+
+            const { data: urlData } = supabaseClient.storage
+                .from('edms-file').getPublicUrl(fileName);
+
+            const { error: dbError } = await supabaseClient.from('files').insert([{
+                name: item.name,
+                file_url: urlData.publicUrl,
+                uploader_name: currentUser.name,
+                section: 'knowledge',
+                folder: folder,
+                doc_type: null,
+                size: item.size
+            }]);
+            if (dbError) throw dbError;
+
+            addLog('upload', currentUser.username, `อัปโหลดคลังความรู้: ${item.name}`);
+            showToast(`✅ ${item.name} สำเร็จ`, 'success');
+
+        } catch (err) {
+            console.error(err);
+            showToast(`❌ ${item.name} ล้มเหลว: ${err.message}`, 'error');
+        }
+    }
+
+    pendingFiles = [];
+    navigate('knowledge', folder);
+}
 
 // ==================== UPLOAD ====================
 let pendingFiles = [];
