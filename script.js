@@ -277,6 +277,11 @@ async function renderHome() {
     const { data: anns, error } = await supabaseClient
         .from('announcements').select('*').order('created_at', { ascending: false });
 
+    // ดึงไฟล์ประกาศทั้งหมดมาพร้อมกัน
+    const { data: annFiles } = await supabaseClient
+        .from('files').select('*').eq('section', 'announcement')
+        .order('created_at', { ascending: false });
+
     let html = `<div class="card">
         <div class="card-header">
             <div class="card-title">📢 ประกาศและข่าวสาร</div>
@@ -287,17 +292,41 @@ async function renderHome() {
         html += `<div class="empty-state">ยังไม่มีประกาศ</div>`;
     } else {
         anns.forEach(a => {
-            html += `<div class="announcement-item">
-                <div style="flex:1">
+            // กรองไฟล์ที่เป็นของประกาศนี้
+            const files = (annFiles || []).filter(f => f.folder === a.id);
+
+            html += `<div class="announcement-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+                <div style="display:flex;justify-content:space-between;width:100%;align-items:flex-start;">
                     <div class="ann-text">${escHtml(a.text)}</div>
-                    ${isAdmin ? `
-                        <div style="display:flex;gap:6px;margin-top:6px;">
-                            <button class="btn btn-outline btn-xs" onclick="editAnn('${a.id}','${escHtml(a.text).replace(/'/g,"\\'")}')">✏️ แก้ไข</button>
-                            <button class="btn btn-danger btn-xs" onclick="deleteAnn('${a.id}')">🗑 ลบ</button>
-                        </div>` : ''}
-                </div>
-                <div class="ann-date">${fmtDateShort(a.created_at)}</div>
-            </div>`;
+                    <div class="ann-date" style="flex-shrink:0;margin-left:12px;">${fmtDateShort(a.created_at)}</div>
+                </div>`;
+
+            // แสดงไฟล์แนบ
+            if (files.length > 0) {
+                html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">`;
+                files.forEach(f => {
+                    const ext = f.name.split('.').pop().toLowerCase();
+                    html += `<div style="display:flex;align-items:center;gap:4px;background:var(--color-background-tertiary);border:1px solid var(--color-border-tertiary);border-radius:6px;padding:4px 8px;font-size:12px;">
+                        <span>${getFileIcon(ext)}</span>
+                        <span style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(f.name)}">${escHtml(f.name)}</span>
+                        <button class="btn btn-outline btn-xs" style="padding:1px 6px;" onclick="previewFile('${f.id}')">ดู</button>
+                        <button class="btn btn-xs" style="padding:1px 6px;" onclick="downloadFile('${f.id}')">⬇</button>
+                        ${isAdmin ? `<button class="btn btn-danger btn-xs" style="padding:1px 6px;" onclick="deleteFile('${f.id}')">✕</button>` : ''}
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+
+            // ปุ่ม admin
+            if (isAdmin) {
+                html += `<div style="display:flex;gap:6px;margin-top:4px;">
+                    <button class="btn btn-outline btn-xs" onclick="editAnn('${a.id}','${escHtml(a.text).replace(/'/g,"\\'")}')">✏️ แก้ไข</button>
+                    <button class="btn btn-outline btn-xs" onclick="showAnnFileUpload('${a.id}')">📎 แนบไฟล์</button>
+                    <button class="btn btn-danger btn-xs" onclick="deleteAnn('${a.id}')">🗑 ลบ</button>
+                </div>`;
+            }
+
+            html += `</div>`;
         });
     }
     document.getElementById('page-content').innerHTML = html + `</div>`;
@@ -362,44 +391,80 @@ function addAnnFile(annId) {
                 ]
         );
 }
+async function handleAnnFiles(input, annId) {
+    const files = Array.from(input.files);
+    if (!files.length) return;
 
-function handleAnnFiles(input, annId) {
-  const files = Array.from(input.files);
-  if (!files.length) return;
-  const container = document.getElementById('ann-file-list');
-  container.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px;">⏳ กำลังอัพโหลด...</div>';
-  
-  let done = 0;
-  const anns = getJSON(ANN_KEY);
-  const ann = anns.find(x => x.id === annId);
-  if (!ann) { closeModal(); return; }
+    const status = document.getElementById('ann-upload-status');
+    if (status) status.innerHTML = '<div style="text-align:center;padding:8px;font-size:13px;color:var(--color-text-secondary);">⏳ กำลังอัปโหลด...</div>';
 
-    files.forEach(file => {
-    const reader = new FileReader();
-        reader.onload = e => {
-        const fileObj = {
-        id: uid(), name: file.name, type: file.type, size: file.size,
-        data: e.target.result, uploaded: now(), uploadedBy: currentUser.username,
-        section: 'announcement', folder: null, docType: null
-        };
-            const allFiles = getJSON(FILES_KEY);
-            allFiles.push(fileObj);
-            setJSON(FILES_KEY, allFiles);
-            ann.files = ann.files || [];
-            ann.files.push({ id: fileObj.id, name: file.name });
-            addLog('upload', currentUser.username, 'อัพโหลดไฟล์ประกาศ: ' + file.name);
+    let done = 0;
+    let failed = 0;
+
+    for (const file of files) {
+        try {
+            const ext = file.name.split('.').pop().toLowerCase();
+            const safeName = file.name.replace(/[^\w\s\-_.]/g, '').replace(/\s+/g, '_').replace(/_+/g, '_') || 'file';
+            const fileName = `${Date.now()}_${safeName}.${ext}`.replace(/\.\w+\.\w+$/, `.${ext}`);
+
+            // อัปโหลดเข้า Storage
+            const { error: stError } = await supabaseClient.storage
+                .from('edms-file').upload(fileName, file);
+            if (stError) throw stError;
+
+            // ดึง URL
+            const { data: urlData } = supabaseClient.storage
+                .from('edms-file').getPublicUrl(fileName);
+
+            // บันทึกลง files โดยใช้ folder = annId เพื่อเชื่อมกับประกาศ
+            const { error: dbError } = await supabaseClient.from('files').insert([{
+                name: file.name,
+                file_url: urlData.publicUrl,
+                uploader_name: currentUser.name,
+                section: 'announcement',
+                folder: annId,
+                doc_type: null,
+                size: file.size
+            }]);
+            if (dbError) throw dbError;
+
             done++;
-            if (done === files.length) {
-            setJSON(ANN_KEY, anns);
-            container.innerHTML = `<div class="watermark-note">✅ อัพโหลด ${done} ไฟล์สำเร็จ</div>`;
-            renderHome();
-            showToast('อัพโหลดสำเร็จ', 'success');
-            }
-        };
-    reader.readAsDataURL(file);
-    });
-}
+        } catch (err) {
+            console.error('Ann file upload error:', err);
+            failed++;
+        }
+    }
 
+    if (status) {
+        status.innerHTML = `<div style="text-align:center;padding:8px;font-size:13px;">
+            ${done > 0 ? `<span style="color:var(--color-text-success);">✅ อัปโหลดสำเร็จ ${done} ไฟล์</span>` : ''}
+            ${failed > 0 ? `<span style="color:var(--color-text-danger);"> ❌ ล้มเหลว ${failed} ไฟล์</span>` : ''}
+        </div>`;
+    }
+
+    addLog('upload', currentUser.username, `แนบไฟล์ประกาศ ${done} ไฟล์`);
+    
+    // รีโหลดหน้าหลังอัปโหลดเสร็จ
+    setTimeout(() => { closeModal(); renderHome(); }, 1000);
+}
+async function deleteFile(id) {
+    if (!confirm('ยืนยันการลบไฟล์นี้ถาวร?')) return;
+
+    const { data: f } = await supabaseClient.from('files').select('*').eq('id', id).single();
+    if (!f) return;
+
+    try {
+        const fileNameInStorage = f.file_url.split('/').pop();
+        await supabaseClient.storage.from('edms-file').remove([fileNameInStorage]);
+        await supabaseClient.from('files').delete().eq('id', id);
+        addLog('delete', currentUser.username, `ลบไฟล์: ${f.name}`);
+        showToast('ลบไฟล์เรียบร้อย', 'success');
+        navigate(currentPage, currentFolder, currentSubfolder);
+    } catch (err) {
+        showToast('ลบไม่สำเร็จ', 'error');
+        console.error(err);
+    }
+}
 
 async function getCloudFiles(section, folder, subfolder) {
     let query = supabaseClient.from('files').select('*').eq('section', section);
@@ -1235,15 +1300,6 @@ function closePreview() {
   document.getElementById('preview-frame').innerHTML = '';
 }
 
-// ลบไฟล์
-async function doDeleteFile(id, fileUrl) {
-    const fileName = fileUrl.split('/').pop();
-    // 1. ลบไฟล์จริงใน Storage
-    await supabaseClient.storage.from('edms-file').remove([fileName]);
-    // 2. ลบข้อมูลในตาราง SQL
-    await supabaseClient.from('files').delete().eq('id', id);
-    navigate(currentPage, currentFolder);
-}
 
 // Enter key login
 document.getElementById('login-password').addEventListener('keydown', e => {
