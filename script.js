@@ -377,19 +377,30 @@ function deleteAnn(id) {
             showToast('ลบประกาศสำเร็จ', 'success');
 }
 
-function addAnnFile(annId) {
-        showModal('แนบไฟล์ประกาศ',
-            `<div class="upload-zone" onclick="document.getElementById('ann-file-input').click()" id="ann-upload-zone">
-                <div class="upload-zone-icon">📎</div>
-                    <div class="upload-zone-text">คลิกเพื่อเลือกไฟล์</div>
-                        <div class="upload-zone-hint">Word, Excel, PDF, PNG, JPG</div>
-            </div>
-                <div id="ann-file-list"></div>
-                <input type="file" id="ann-file-input" multiple accept=".pdf,.docx,.xlsx,.png,.jpg,.jpeg" style="display:none" onchange="handleAnnFiles(this,'${annId}')">`,
-                [
-                    { text: 'ปิด', cls: 'btn-outline', fn: closeModal }
-                ]
-        );
+function showAnnFileUpload(annId) {
+    showModal('แนบไฟล์ประกาศ',
+        `<div class="upload-zone" id="ann-upload-zone"
+            onclick="document.getElementById('ann-file-input').click()"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="handleAnnDrop(event,'${annId}')">
+            <div class="upload-zone-icon">📎</div>
+            <div class="upload-zone-text">คลิกหรือลากไฟล์มาวางที่นี่</div>
+            <div class="upload-zone-hint">Word, Excel, PDF, PNG, JPG</div>
+        </div>
+        <div id="ann-upload-status"></div>
+        <input type="file" id="ann-file-input" multiple
+            accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg"
+            style="display:none"
+            onchange="handleAnnFiles(this,'${annId}')">`,
+        [{ text: 'ปิด', cls: 'btn-outline', fn: closeModal }]
+    );
+}
+
+function handleAnnDrop(event, annId) {
+    event.preventDefault();
+    document.getElementById('ann-upload-zone').classList.remove('drag');
+    handleAnnFiles({ files: event.dataTransfer.files }, annId);
 }
 async function handleAnnFiles(input, annId) {
     const files = Array.from(input.files);
