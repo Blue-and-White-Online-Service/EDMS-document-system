@@ -189,7 +189,7 @@ function renderSidebar() {
             <span class="nav-icon"><i class="fa-solid fa-file-contract"></i></span> เอกสารการตรวจติดตาม
         </div>
         <div class="nav-item ${currentPage === 'knowledge' ? 'active' : ''}" onclick="navigate('knowledge')">
-            <span class="nav-icon"><i class="fa-solid fa-book-open"></i></span> คลังคู่มือ / ความรู้
+            <span class="nav-icon"><i class="fa-solid fa-door-open"></i></span> คลังคู่มือ / ความรู้
         </div>`;
 
     if (isAdmin) {
