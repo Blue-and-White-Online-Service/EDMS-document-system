@@ -1252,13 +1252,13 @@ async function applyPdfWatermark(dataUrl, callback, wmConfig) {
                     const w = imgDims.width * scale;
                     const h = imgDims.height * scale;
                         page.drawImage(embeddedImage, {
-                            x: (width / 2) - (w / 2),
-                            y: (height / 2) - (h / 2),
+                            x: (width / 2) - (w / 2) * Math.cos(Math.PI / 6) + (h / 2) * Math.sin(Math.PI / 6),
+                            y: (height / 2) - (h / 2) * Math.cos(Math.PI / 6) - (w / 2) * Math.sin(Math.PI / 6),
                             width: w,
                             height: h,
                             rotate: PDFLib.degrees(30),
                             opacity: 0.08,
-    });
+                        });
 }
 
                 if (wmText.trim()) {
