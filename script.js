@@ -1151,19 +1151,23 @@ async function applyPdfWatermark(dataUrl, callback, wmConfig) {
         for (const page of pages) {
             const { width, height } = page.getSize();
             if (embeddedImage) {
-                page.drawImage(embeddedImage, { x: 0, y: 0, width, height, opacity: 0.08 });
-            }
-            if (wmText.trim()) {
-                const canvas = document.createElement('canvas');
-                canvas.width = width * 2;
-                canvas.height = height * 2;
-                const ctx = canvas.getContext('2d');
-                ctx.scale(2, 2);
-                drawTextWatermarkFull(ctx, width, height, wmText.trim());
-                const textImgData = canvas.toDataURL('image/png');
-                const embeddedText = await pdfDoc.embedPng(textImgData);
-                page.drawImage(embeddedText, { x: 0, y: 0, width, height });
-            }
+            const { width, height } = page.getSize();
+            const imgDims = embeddedImage.scale(1);
+            const scale = Math.min((width * 0.6) / imgDims.width, (height * 0.6) / imgDims.height);
+            const w = imgDims.width * scale;
+            const h = imgDims.height * scale;
+
+                page.drawImage(embeddedImage, {
+                x: width / 2,
+                y: height / 2,
+                width: w,
+                height: h,
+                rotate: PDFLib.degrees(-30), // เอียง -30 องศา
+                opacity: 0.08,
+                x: width / 2 - (w / 2 * Math.cos(Math.PI / 6)), 
+                y: height / 2 + (h / 2 * Math.sin(Math.PI / 6))
+    });
+}
         }
 
         const pdfBytes = await pdfDoc.saveAsBase64({ dataUri: true });
