@@ -570,7 +570,7 @@ async function renderDept(folder, subfolder) {
         }
     } else {
         const files = await getCloudFiles('dept', folder, subfolder);
-        const DOC_TYPES = ['ทั้งหมด', 'FR', 'WI', 'JD', 'SP', 'SD'];
+        const DOC_TYPES = ['ทั้งหมด', 'FR', 'WI', 'JD'];
         const activeFilter = subfolder || 'ทั้งหมด';
         let html = `<div class="breadcrumb">
             <a onclick="navigate('dept')">📂 เอกสารฝ่ายต่างๆ</a>
@@ -767,7 +767,7 @@ let pendingFiles = [];
 function showUploadModal(section, folder) {
     pendingFiles = [];
     const isDocType = section === 'dept';
-    const DOC_TYPES = ['FR', 'WI', 'JD', 'SP', 'SD'];
+    const DOC_TYPES = ['FR', 'WI', 'JD'];
 
         let body = `<div class="watermark-note">
                 <i class="fa-solid fa-file-shield"></i>ลายน้ำจะถูกประทับลงไฟล์ PDF และ PNG/JPG โดยอัตโนมัติ
