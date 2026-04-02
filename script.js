@@ -1161,7 +1161,7 @@ async function applyPdfWatermark(dataUrl, callback, wmConfig) {
                 y: height / 2,
                 width: w,
                 height: h,
-                rotate: PDFLib.degrees(-30),
+                rotate: PDFLib.degrees(-45),
                 opacity: 0.08,
                 x: (width / 2) - (w / 2 * Math.cos(Math.PI / 6) + h / 2 * Math.sin(Math.PI / 6)),
                 y: (height / 2) + (w / 2 * Math.sin(Math.PI / 6) - h / 2 * Math.cos(Math.PI / 6))
