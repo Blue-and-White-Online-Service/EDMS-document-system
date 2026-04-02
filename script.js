@@ -1041,15 +1041,18 @@ async function renderWatermark() {
     </div>`;
 }
 
+// ==================== WATERMARK CONFIGURATION ====================
 function previewWatermarkImage(input) {
     const file = input.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = e => {
         document.getElementById('wm-preview-area').innerHTML =
-            `<img src="${e.target.result}" id="wm-img-preview"
-                style="max-height:60px;border:1px solid var(--border);padding:4px;border-radius:4px;">
-            <button class="btn btn-danger btn-xs" onclick="clearWatermarkPreview()">✕ ลบรูปภาพ</button>`;
+            `<div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                <img src="${e.target.result}" id="wm-img-preview" 
+                    style="width: 150px; object-fit: contain; border: 1px solid var(--border); padding: 4px; border-radius: 4px; background: #f9f9f9;">
+                <button class="btn btn-danger btn-xs" onclick="clearWatermarkPreview()">✕ ลบรูปภาพ</button>
+            </div>`;
     };
     reader.readAsDataURL(file);
 }
@@ -1161,7 +1164,7 @@ async function applyPdfWatermark(dataUrl, callback, wmConfig) {
                 y: height / 2,
                 width: w,
                 height: h,
-                rotate: PDFLib.degrees(-45),
+                rotate: PDFLib.degrees(45),
                 opacity: 0.08,
                 x: (width / 2) - (w / 2 * Math.cos(Math.PI / 6) + h / 2 * Math.sin(Math.PI / 6)),
                 y: (height / 2) + (w / 2 * Math.sin(Math.PI / 6) - h / 2 * Math.cos(Math.PI / 6))
