@@ -542,7 +542,7 @@ async function getCloudFiles(section, folder, subfolder, page = 0) {
 async function renderDept(folder, subfolder) {
     const isAdmin = currentUser.role === 'admin';
     const content = document.getElementById('page-content');
-    content.innerHTML = showFolderLoading('กำลังโหลดเอกสารฝ่าย...')
+    content.innerHTML = showFolderLoading('กำลังโหลดเอกสารฝ่าย...');
 
     if (!folder) {
         try {
@@ -822,8 +822,8 @@ async function renameFile(id, currentName) {
 function showFolderLoading(message = 'กำลังโหลดเอกสาร...') {
     return `
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;">
-        <div class="folder-spinner"></div>
-        <div style="font-size:14px;color:var(--color-text-secondary);">${message}</div>
+        <div class="spinner" style="border-top-color:#000;"></div>
+        <div style="font-size:13px;font-weight:500;color:var(--text2);">${message}</div>
     </div>`;
 }
 
