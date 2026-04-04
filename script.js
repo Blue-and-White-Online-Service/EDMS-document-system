@@ -197,26 +197,6 @@ function resetIdleTimer() {
 
 function showLoginScreen() {
     document.getElementById('login-screen').style.display = 'flex';
-    setTimeout(() => {
-        if (document.getElementById('request-account-link')) return;
-        const GOOGLE_FORM_URL = 'https://forms.gle/YOUR_GOOGLE_FORM_LINK'; // ← เปลี่ยนตรงนี้
-        const loginBox = document.querySelector('.login-box');
-        if (!loginBox) return;
-        const el = document.createElement('div');
-        el.id = 'request-account-link';
-        el.style.cssText = 'text-align:center;margin-top:16px;';
-        el.innerHTML = `
-            <a href="${GOOGLE_FORM_URL}" target="_blank" rel="noopener noreferrer"
-               style="font-size:13px;color:var(--text2);text-decoration:none;
-                      display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
-                      border:1px solid var(--border2);border-radius:var(--radius);transition:color 0.2s;"
-               onmouseover="this.style.color='var(--accent)'"
-               onmouseout="this.style.color='var(--text2)'">
-                <i class="fa-solid fa-circle-question"></i> ขอ Username / Password
-            </a>
-            <div style="font-size:11px;color:var(--text3);margin-top:6px;">สำหรับพนักงานใหม่หรือลืมรหัสผ่าน</div>`;
-        loginBox.appendChild(el);
-    }, 100);
 }
 
 // ผูก event กับทุก user interaction
@@ -291,7 +271,12 @@ async function verifyAdminFromDB() {
 
 // ==================== LOG ====================
 async function addLog(type, user, action) {
-    await supabaseClient.from('logs').insert([{ type, user_name: user, action }]);
+    if (!window.supabaseClient) return;
+    try {
+        await supabaseClient.from('logs').insert([{ type, user_name: user, action }]);
+    } catch (e) {
+        console.warn('Log insert ล้มเหลว:', e.message);
+    }
 }
 
 async function renderLogs() {

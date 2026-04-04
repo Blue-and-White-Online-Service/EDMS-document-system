@@ -132,7 +132,10 @@ body {
 .btn.btn-danger.btn-outline {color: var(--surface); background-color: var(--danger);}
 .btn.btn-danger.btn-outline:hover {color: var(--surface); background-color: var(--danger); border-color: var(--danger);}
 
-  /* ===== LAYOUT ===== */
+
+.btn-getusername:hover { color: var(--accent);}
+
+/* ===== LAYOUT ===== */
 #app { display: none; min-height: 100vh; }
 .layout { display: flex; min-height: 100vh; }
 
@@ -761,6 +764,7 @@ body {
     font-weight: 500;
     color: var(--primary);
 }
+
 
 
 
