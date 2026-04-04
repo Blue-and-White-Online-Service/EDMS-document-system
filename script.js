@@ -1,6 +1,6 @@
 const supabaseUrl = 'https://hmslzkhetlqcxnqbtfit.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhtc2x6a2hldGxxY3hucWJ0Zml0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTM3MDAsImV4cCI6MjA5MDQyOTcwMH0.53DYgg2MwqDRYf_VPdL4VQ5EOm1BEVmDz2DLLQxdA0Y';
-const JWT_SECRET = 'YOUR_SUPABASE_JWT_SECRET';
+const JWT_SECRET = 'mTneJhRRYVy+tfven7AdracteCqphXfgz3nfvEGqm4uJnwqnZzQp5h9yvJMqICeWWXxhxUh8BGAC1HCpE64nHQ==';
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==================== CONSTANTS ====================
