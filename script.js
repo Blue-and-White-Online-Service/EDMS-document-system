@@ -1,6 +1,6 @@
 const supabaseUrl = 'https://hmslzkhetlqcxnqbtfit.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhtc2x6a2hldGxxY3hucWJ0Zml0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTM3MDAsImV4cCI6MjA5MDQyOTcwMH0.53DYgg2MwqDRYf_VPdL4VQ5EOm1BEVmDz2DLLQxdA0Y';
-let supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==================== CONSTANTS ====================
 const SESSION_KEY = 'edms_session';
@@ -8,25 +8,19 @@ const PAGE_SIZE = 25;
 // ==================== JWT AUTH ====================
 
 async function setupSupabaseAuth(user) {
-    // 1. ส่งข้อมูลไปให้ Edge Function สร้าง Token ให้ (ตาม Logic เดิมของคุณ)
-    const token = await signJWT({
+        const token = await signJWT({
         user_id: user.id,
         user_role: user.role,
         username: user.username
     });
-
-    // 2. **สำคัญมาก** อัปเดตรีโมท (supabaseClient) ให้ใช้กุญแจดอกใหม่ (Token)
-    // เราสั่งทับตัวแปรเดิมที่ประกาศไว้ข้างบนสุดได้เลย
-    supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
+    window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
         global: {
             headers: { Authorization: `Bearer ${token}` }
         }
     });
-
-    // 3. เก็บข้อมูลลงเครื่อง (LocalStorage) เหมือนเดิม
     const session = { id: user.id, ts: Date.now(), token: token };
     ls(SESSION_KEY, JSON.stringify(session));
-    
+    window.supabaseClient = supabaseClient;
     console.log("Login สำเร็จและเปลี่ยนกุญแจเป็น JWT เรียบร้อย!");
 }
 
@@ -41,7 +35,7 @@ async function loadLogs() {
         console.error("Error fetching logs:", error.message);
     } else {
         console.log("Logs data:", data);
-        // แสดงผลใน UI ต่อไป...
+      
     }
 }
 
@@ -113,8 +107,7 @@ async function doLogin() {
     const hashedPass = CryptoJS.SHA256(p).toString().toLowerCase();
 
     try {
-        // ✅ เรียก Edge Function แทน ไม่มี JWT_SECRET ใน browser แล้ว
-        const res = await fetch(`${supabaseUrl}/functions/v1/issue-token`, {
+            const res = await fetch(`${supabaseUrl}/functions/v1/issue-token`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -143,8 +136,7 @@ async function doLogin() {
         loginAttempts[u] = { count: 0, lockUntil: 0 };
         currentUser = result.user;
 
-        // เซ็ต supabase client ด้วย token จาก server
-        window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
+            window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
             global: { headers: { Authorization: `Bearer ${result.token}` } },
             auth: { persistSession: false }
         });
@@ -174,13 +166,14 @@ async function setupSupabaseAuth(user, token) {
         window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
     }
 
-    window.supabaseClient.auth.setSession({
+   await window.supabaseClient.auth.setSession({
         access_token: token,
-        refresh_token: token 
+        refresh_token: token
     });
 
-    const session = { id: user.id, ts: Date.now(), token: token };
+    const session = { id: user.id, ts: Date.now(), token };
     ls(SESSION_KEY, JSON.stringify(session));
+    console.log("ตั้งค่าสิทธิ์เรียบร้อย");
 }
 
 // ==================== LOGOUT ====================
@@ -248,7 +241,7 @@ async function checkSession() {
             });
         }
 
-        const { data: found, error } = await supabaseClient
+        const { data: found, error } = await window.supabaseClient
             .from('users')
             .select('id, username, name, role, created_at')
             .eq('id', session.id)
@@ -1409,7 +1402,7 @@ async function globalSearch(q) {
 
 // ==================== USERS ====================
 async function renderUsers() {
-    const { data: users, error } = await supabaseClient.from('users').select('*').order('name');
+    const { data: users, error } = await window.supabaseClient.from('users').select('*').order('name');
     if (error) { showToast('เกิดข้อผิดพลาดในการโหลดผู้ใช้', 'error'); return; }
 
     let html = `<div class="card">
