@@ -1,6 +1,6 @@
 const supabaseUrl = 'https://hmslzkhetlqcxnqbtfit.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhtc2x6a2hldGxxY3hucWJ0Zml0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4NTM3MDAsImV4cCI6MjA5MDQyOTcwMH0.53DYgg2MwqDRYf_VPdL4VQ5EOm1BEVmDz2DLLQxdA0Y';
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+let supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==================== CONSTANTS ====================
 const SESSION_KEY = 'edms_session';
@@ -8,37 +8,26 @@ const PAGE_SIZE = 25;
 // ==================== JWT AUTH ====================
 
 async function setupSupabaseAuth(user) {
-    // 1. เรียก Edge Function เพื่อขอ Token (โค้ดเดิมของคุณ)
-    const response = await fetch(`${supabaseUrl}/functions/v1/issue-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: user.username, password: user.password }) // หรือตาม logic ของคุณ
+    // 1. ส่งข้อมูลไปให้ Edge Function สร้าง Token ให้ (ตาม Logic เดิมของคุณ)
+    const token = await signJWT({
+        user_id: user.id,
+        user_role: user.role,
+        username: user.username
     });
+
+    // 2. **สำคัญมาก** อัปเดตรีโมท (supabaseClient) ให้ใช้กุญแจดอกใหม่ (Token)
+    // เราสั่งทับตัวแปรเดิมที่ประกาศไว้ข้างบนสุดได้เลย
+    supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
+        global: {
+            headers: { Authorization: `Bearer ${token}` }
+        }
+    });
+
+    // 3. เก็บข้อมูลลงเครื่อง (LocalStorage) เหมือนเดิม
+    const session = { id: user.id, ts: Date.now(), token: token };
+    ls(SESSION_KEY, JSON.stringify(session));
     
-    const { token } = await response.json();
-
-    if (token) {
-        // 2. อัปเดต supabase instance เดิมให้ใช้ Token ใหม่ในทุกๆ Request ต่อจากนี้
-        supabase = supabase.createClient(supabaseUrl, supabaseKey, {
-            global: {
-                headers: { Authorization: `Bearer ${token}` }
-            }
-        });
-
-        // 3. เก็บลง LocalStorage เพื่อให้ Refresh หน้าแล้วยังอยู่
-        const sessionData = { 
-            id: user.id, 
-            role: user.user_role, 
-            token: token,
-            ts: Date.now() 
-        };
-        localStorage.setItem('edms_session', JSON.stringify(sessionData));
-        
-        console.log("Login success & Token attached!");
-        
-        // 4. โหลดข้อมูลใหม่หลังจาก Login สำเร็จ
-        loadLogs(); 
-    }
+    console.log("Login สำเร็จและเปลี่ยนกุญแจเป็น JWT เรียบร้อย!");
 }
 
 async function loadLogs() {
