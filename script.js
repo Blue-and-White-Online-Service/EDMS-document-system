@@ -31,7 +31,8 @@ async function setupSupabaseAuth(user) {
 }
 
 async function loadLogs() {
-    const { data, error } = await supabase
+    if (!window.supabaseClient) return;
+    const { data, error } = await window.supabaseClient
         .from('logs')
         .select('*')
         .order('created_at', { ascending: false });
