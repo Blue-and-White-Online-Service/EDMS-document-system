@@ -1298,6 +1298,16 @@ function removeProgressToast() {
     }
 }
 
+
+async function getSignedUrl(fileUrl) {
+    const fileName = fileUrl.split('/').pop();
+    const { data, error } = await supabaseClient.storage
+        .from('edms-file')
+        .createSignedUrl(fileName, 300); // หมดอายุใน 5 นาที
+    if (error) throw error;
+    return data.signedUrl;
+}
+
 // ==================== FILE PREVIEW & DOWNLOAD ====================
 async function previewFile(id) {
     const { data: f } = await supabaseClient.from('files').select('*').eq('id', id).single();
@@ -1308,10 +1318,11 @@ async function previewFile(id) {
     const frame = document.getElementById('preview-frame');
     const ext = f.name.split('.').pop().toLowerCase();
 
-    if (['png', 'jpg', 'jpeg'].includes(ext)) {
-        frame.innerHTML = `<img src="${f.file_url}" style="max-height:480px;object-fit:contain;">`;
-    } else if (ext === 'pdf') {
-        frame.innerHTML = `<iframe src="${f.file_url}" style="width:100%;height:100%;border:none;border-radius:6px;"></iframe>`;
+ const signedUrl = await getSignedUrl(f.file_url);
+if (['png', 'jpg', 'jpeg'].includes(ext)) {
+    frame.innerHTML = `<img src="${signedUrl}" style="max-height:480px;object-fit:contain;">`;
+} else if (ext === 'pdf') {
+    frame.innerHTML = `<iframe src="${signedUrl}" style="width:100%;height:100%;border:none;border-radius:6px;"></iframe>`;
     } else {
         frame.innerHTML = `<div style="text-align:center;padding:40px;">
             <div style="font-size:48px;">${getFileIcon(ext)}</div>
@@ -1323,13 +1334,15 @@ async function previewFile(id) {
     document.getElementById('preview-overlay').classList.add('show');
 }
 
+
 async function downloadFile(id) {
     const { data: f } = await supabaseClient.from('files').select('*').eq('id', id).single();
     if (!f) { showToast('ไม่พบไฟล์', 'error'); return; }
     addLog('download', currentUser.username, `ดาวน์โหลด: ${f.name}`);
     try {
         showToast('⏳ กำลังดาวน์โหลด...', '');
-        const response = await fetch(f.file_url);
+        const signedUrl = await getSignedUrl(f.file_url);
+        const response = await fetch(signedUrl);
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
