@@ -106,7 +106,7 @@ async function doLogin() {
     }
 
     toggleLoading(true, 'กำลังเข้าสู่ระบบ...');
-    const hashedPass = CryptoJS.SHA256(p).toString().toLowerCase();
+    body: JSON.stringify({ username: u, password: p })
 
     try {
         // เรียก Edge Function — JWT_SECRET อยู่ใน Server ไม่หลุด Browser
