@@ -95,7 +95,6 @@ async function doLogin() {
     const p = document.getElementById('login-password').value;
     if (!u || !p) { showToast('กรุณากรอกข้อมูลให้ครบ', 'error'); return; }
 
-    // Rate limiting
     const now = Date.now();
     if (!loginAttempts[u]) loginAttempts[u] = { count: 0, lockUntil: 0 };
     const att = loginAttempts[u];
@@ -106,17 +105,15 @@ async function doLogin() {
     }
 
     toggleLoading(true, 'กำลังเข้าสู่ระบบ...');
-    body: JSON.stringify({ username: u, password: p })
 
     try {
-        // เรียก Edge Function — JWT_SECRET อยู่ใน Server ไม่หลุด Browser
         const res = await fetch(`${supabaseUrl}/functions/v1/issue-token`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${supabaseKey}`
             },
-            body: JSON.stringify({ username: u, password: hashedPass })
+            body: JSON.stringify({ username: u, password: p }) // ← ส่ง p ตรงๆ ไม่ต้อง hash
         });
 
         const result = await res.json();
@@ -136,14 +133,10 @@ async function doLogin() {
             return;
         }
 
-        // Login สำเร็จ
         loginAttempts[u] = { count: 0, lockUntil: 0 };
         currentUser = result.user;
-
-        // Setup client ด้วย token จาก Server
         setupSupabaseClient(result.token);
 
-        // บันทึก session
         const session = { id: result.user.id, ts: Date.now(), token: result.token };
         ls(SESSION_KEY, JSON.stringify(session));
 
