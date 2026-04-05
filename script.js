@@ -1406,13 +1406,18 @@ const EDGE_FN_URL = `${supabaseUrl}/functions/v1/manage-user`;
 async function callManageUser(action, payload) {
     const raw = ls(SESSION_KEY);
     let requesterId = '';
-    try { requesterId = JSON.parse(raw).id; } catch { requesterId = raw; }
+    let token = supabaseKey; // fallback
+    try {
+        const session = JSON.parse(raw);
+        requesterId = session.id;
+        token = session.token || supabaseKey; // ใช้ JWT token
+    } catch { requesterId = raw; }
 
     const res = await fetch(EDGE_FN_URL, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getAuthToken()}`
+            'Authorization': `Bearer ${token}` // ← ใช้ token จริง
         },
         body: JSON.stringify({ action, payload, requesterId })
     });
@@ -1500,6 +1505,26 @@ async function deleteUser(id) {
     addLog('delete', currentUser.username, 'ลบผู้ใช้');
     renderUsers();
     showToast('ลบสำเร็จ', 'success');
+}
+
+function isSessionValid() {
+    try {
+        const session = JSON.parse(ls(SESSION_KEY));
+        if (!session?.token || !session?.ts) return false;
+        if ((Date.now() - session.ts) > SESSION_EXPIRY_MS) {
+            showToast('Session หมดอายุ กรุณา Login ใหม่', 'error');
+            setTimeout(doLogout, 1500);
+            return false;
+        }
+        return true;
+    } catch { return false; }
+}
+
+// เพิ่มใน deleteFile, deleteSelectedFiles, renameFile, confirmUpload
+async function deleteFile(id) {
+    if (!isSessionValid()) return; // ← เพิ่มบรรทัดนี้
+    if (!confirm('ยืนยันการลบไฟล์นี้ถาวร?')) return;
+    // ... โค้ดเดิม
 }
 
 // ==================== WATERMARK SETTINGS ====================
