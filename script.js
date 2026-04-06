@@ -299,7 +299,7 @@ async function renderLogs() {
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px;">
             <div style="background:var(--surface2);border-radius:8px;padding:12px;text-align:center;">
                 <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">อัพโหลดทั้งหมด</div>
-                <div style="font-size:24px;font-weight:600;">📤 ${uploadCount}</div>
+                <div style="font-size:24px;font-weight:600;">⬆️ ${uploadCount}</div>
                 <div style="font-size:11px;color:var(--text2);">ครั้ง (200 รายการล่าสุด)</div>
             </div>
             <div style="background:var(--surface2);border-radius:8px;padding:12px;text-align:center;">
@@ -309,7 +309,7 @@ async function renderLogs() {
             </div>
             <div style="background:var(--surface2);border-radius:8px;padding:12px;text-align:center;">
                 <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">ไฟล์ทั้งหมด</div>
-                <div style="font-size:24px;font-weight:600;">🗂 ${(filesData || []).length}</div>
+                <div style="font-size:24px;font-weight:600;">🗎 ${(filesData || []).length}</div>
                 <div style="font-size:11px;color:var(--text2);">ไฟล์</div>
             </div>
         </div>
